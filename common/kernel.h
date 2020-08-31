@@ -1,8 +1,5 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
-#include <cmath>
-#include <Eigen/Core>
 #include <cuda_runtime_api.h>
 #include <cuda_profiler_api.h>
 
