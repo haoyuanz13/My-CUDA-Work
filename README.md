@@ -2,7 +2,7 @@
 A repository to store my cuda codes, including some common-used kernels. 
 
 ## Deps
-You are supposed to get a GPU workspace first, below shows my one, 
+You are supposed to get a GPU workspace first, below is one of the succeeded examples, 
 - `Ubuntu` 16.04
 - `Opencv` ≥ 3.1
 - `CUDA` 10.0
@@ -12,8 +12,11 @@ You are supposed to get a GPU workspace first, below shows my one,
 
 ## Execution
 ```bash
-git clone
+git clone https://github.com/haoyuanz13/My-CUDA-Work.git
+cd My-CUDA-Work
 ```
+
+
 
 Some of the cuda kernel implementation topics are listed below, alse keep learning and uploading, <br>
 - [x] The gray image normalization
