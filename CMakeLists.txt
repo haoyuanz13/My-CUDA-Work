@@ -22,12 +22,9 @@ cmake_minimum_required(VERSION 3.5)
 project(my_cuda LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD  11)   # c++11
-
-# Set debug or release mode
 # set(CMAKE_BUILD_TYPE "Debug")
 set(CMAKE_BUILD_TYPE "Release")
 set(USE_OPENCV ON)
-
 
 # Enable compiler warnings
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -43,7 +40,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #--------------------------------------------------
 # Build configurations, global to all projects
 #--------------------------------------------------
-# set(EXE_NAME_GRAY_NORM my_cuda_gray_norm)
 set(EXE_NAME_GRAY_NORM ${PROJECT_NAME}_gray_norm)
 set(CU_LIB_NAME cu_kernels)
 
