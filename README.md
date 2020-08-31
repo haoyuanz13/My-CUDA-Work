@@ -16,10 +16,18 @@ git clone https://github.com/haoyuanz13/My-CUDA-Work.git
 cd My-CUDA-Work
 ```
 
+Before compiling, change the `CUDNN_LIBRARY` at the **line 68** in the CMakeLists.txt file, and then, 
+```bash
+sh compile
+sh run
+```
 
 
-Some of the cuda kernel implementation topics are listed below, alse keep learning and uploading, <br>
-- [x] The gray image normalization
+## Clarification
+All the demo main codes are stored in the folder `src` that are implemented via `cpp`, and the kernels also other further header files will be ordered under the `common`.
+
+In addition, some of the cuda kernel implementation topics are listed below, keep learning and uploading, <br>
+- [x] The gray image normalization, check `src/main_gray_normalize.cpp`
 - [ ] The rgb image normalization, including channels flip, e.g. bgr to rgb
 - [ ] The center-aligned based image padding 
 - [ ] The biliner interpolation based image resize
@@ -27,3 +35,6 @@ Some of the cuda kernel implementation topics are listed below, alse keep learni
 - [ ] The feature map postprocess for the classification scenario, using reducing algorithm
 - [ ] The 3D pointclouds generation based on the depth image and camera models
 
+
+## More things
+Just feel free to check this repository, also will be pleasure if these stuffs would do a favor to you.
