@@ -26,7 +26,7 @@ sh run.sh
 ## Clarification
 All the demo main codes are stored in the folder `src` that are implemented via `cpp`, and the kernels also other further header files will be ordered under the `common`.
 
-In addition, some of the cuda kernel implementation topics are listed below, keep learning and uploading, <br>
+In addition, some of the cuda kernel implementation topics are listed below, will keep learning and uploading, <br>
 - [x] The gray image normalization, check `src/main_gray_normalize.cpp`
 - [ ] The rgb image normalization, including channels flip, e.g. bgr to rgb
 - [ ] The center-aligned based image padding 
