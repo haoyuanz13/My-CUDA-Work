@@ -16,10 +16,10 @@ git clone https://github.com/haoyuanz13/My-CUDA-Work.git
 cd My-CUDA-Work
 ```
 
-Before compiling, change the `CUDNN_LIBRARY` at the **line 68** in the CMakeLists.txt file, and then, 
+Before compiling, change the `DCUDNN_LIBRARY` in the file `compile.sh`, then, 
 ```bash
-sh compile
-sh run
+sh compile.sh
+sh run.sh
 ```
 
 
