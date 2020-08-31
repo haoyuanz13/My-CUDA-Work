@@ -65,7 +65,6 @@ set(CU_SOURCES
 
 # CUDA and cuDNN deps
 find_package(CUDA 10.0 REQUIRED)
-set(CUDNN_LIBRARY /data/cuda/cuda-10.0/cudnn/v7.6.5/lib64/libcudnn.so)
 MESSAGE(STATUS "FOUND CUDNN Lib: ${CUDNN_LIBRARY}")
 
 # OpenCV deps
