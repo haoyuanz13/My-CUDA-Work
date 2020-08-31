@@ -21,7 +21,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(my_cuda LANGUAGES CXX C)
 
-set(TRTINFER_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_CXX_STANDARD  11)   # c++11
 
 # Set debug or release mode
