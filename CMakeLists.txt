@@ -40,11 +40,18 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Build configurations, global to all projects
 #--------------------------------------------------
 set(EXE_NAME_GRAY_NORM ${PROJECT_NAME}_gray_norm)
+set(EXE_NAME_BGR2RGB_NORM ${PROJECT_NAME}_bgr2rgb_norm)
 set(CU_LIB_NAME cu_kernels)
 
 # set exe files
 set(EXE_SOURCES_GRAY_NORM
   ${PROJECT_SOURCE_DIR}/src/main_gray_normalize.cpp
+)
+set(EXE_SOURCES_BGR2RGB_NORM
+  ${PROJECT_SOURCE_DIR}/src/main_bgr2rgb_normalize.cpp
+)
+set(CU_SOURCES
+  ${PROJECT_SOURCE_DIR}/common/kernel.cu
 )
 
 # set exe includes
@@ -52,10 +59,6 @@ set(EXE_INCLUDE
   ${PROJECT_SOURCE_DIR}/common
 )
 
-# set cu files
-set(CU_SOURCES
-  ${PROJECT_SOURCE_DIR}/common/kernel.cu
-)
 
 # CUDA and cuDNN deps
 find_package(CUDA 10.0 REQUIRED)
@@ -91,7 +94,17 @@ target_link_libraries(${EXE_NAME_GRAY_NORM}
   ${CU_LIB_NAME}
 )
 
+add_executable(${EXE_NAME_BGR2RGB_NORM} ${EXE_SOURCES_BGR2RGB_NORM})
+target_include_directories(${EXE_NAME_BGR2RGB_NORM} PUBLIC ${EXE_INCLUDE})
+target_link_libraries(${EXE_NAME_BGR2RGB_NORM}
+  ${CUDA_LIBRARIES}
+  ${CUDNN_LIBRARY}
+  ${CU_LIB_NAME}
+)
+
 if(USE_OPENCV)
   target_include_directories(${EXE_NAME_GRAY_NORM} PUBLIC ${OpenCV_INCLUDE_DIRS})
   target_link_libraries(${EXE_NAME_GRAY_NORM} ${OpenCV_LIBS})
+  target_include_directories(${EXE_NAME_BGR2RGB_NORM} PUBLIC ${OpenCV_INCLUDE_DIRS})
+  target_link_libraries(${EXE_NAME_BGR2RGB_NORM} ${OpenCV_LIBS})
 endif()
