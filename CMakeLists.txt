@@ -92,6 +92,7 @@ target_link_libraries(${EXE_NAME_GRAY_NORM}
   ${CUDA_LIBRARIES}
   ${CUDNN_LIBRARY}
   ${CU_LIB_NAME}
+  ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )
 
 add_executable(${EXE_NAME_BGR2RGB_NORM} ${EXE_SOURCES_BGR2RGB_NORM})
@@ -100,6 +101,7 @@ target_link_libraries(${EXE_NAME_BGR2RGB_NORM}
   ${CUDA_LIBRARIES}
   ${CUDNN_LIBRARY}
   ${CU_LIB_NAME}
+  ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )
 
 if(USE_OPENCV)
