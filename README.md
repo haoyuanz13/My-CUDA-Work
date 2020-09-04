@@ -2,7 +2,7 @@
 A repository to store my cuda codes, including some common-used kernels. 
 
 ## Deps
-You are supposed to get a GPU workspace first, below is one of the succeeded examples, 
+You are supposed to get a GPU workspace first, below is one of the succeeded dep combinations, 
 - `Ubuntu` 16.04
 - `cmake` 3.15.6
 - `Opencv` ≥ 3.1
