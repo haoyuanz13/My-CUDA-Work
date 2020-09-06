@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
     for(auto& e: streams) cudaStreamDestroy(e);
     cudaCheckError(cudaProfilerStop());
 
-    std::cout << "- the rgb image normalization and channel transfer demo is completed!" << std::endl;
+    std::cout << "- the rgb image normalization and channel order transfer demo is completed!" << std::endl;
 
     return 0;
 }
