@@ -60,37 +60,39 @@ set(EXE_INCLUDE
 )
 
 
-# CUDA and cuDNN deps
-find_package(CUDA 10.0 REQUIRED)
-MESSAGE(STATUS "FOUND CUDNN Lib: ${CUDNN_LIBRARY}")
-
 # OpenCV deps
 if(USE_OPENCV)
 find_package(OpenCV 3.3 REQUIRED)
 if(OpenCV_FOUND)
   MESSAGE(STATUS "Found OpenCV:${OpenCV_INCLUDE_DIRS}, libs:${OpenCV_LIBS}")
   MESSAGE(STATUS "Found OpenCV Version: ${OpenCV_VERSION}")
+  include_directories(${OpenCV_INCLUDE_DIRS})
+  link_libraries(${OpenCV_LIBS})
 endif()
 endif(USE_OPENCV)
+
+
+# CUDA and cuDNN deps
+find_package(CUDA 10.0 REQUIRED)
+if(CUDA_FOUND)
+  MESSAGE(STATUS "FOUND CUDNN Lib: ${CUDNN_LIBRARY}")
+  list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fPIC --expt-extended-lambda -std=c++11")
+  CUDA_ADD_LIBRARY(${CU_LIB_NAME} SHARED ${CU_SOURCES})
+  TARGET_INCLUDE_DIRECTORIES(${CU_LIB_NAME} PUBLIC ${CUDA_INCLUDE_DIRS})
+  TARGET_LINK_LIBRARIES(${CU_LIB_NAME}
+    ${CUDA_LIBRARIES}
+    ${CUDNN_LIBRARY}
+  )
+endif()
 
 
 # --------------------------------
 # Converter executable
 # --------------------------------
-include_directories(
-  ${CUDA_INCLUDE_DIRS}
-)
-list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fPIC --expt-extended-lambda -std=c++11")
-CUDA_INCLUDE_DIRECTORIES(${CUDNN_INCLUDE_DIR})
-CUDA_ADD_LIBRARY(${CU_LIB_NAME} SHARED ${CU_SOURCES})
-
-
 # executable 
 add_executable(${EXE_NAME_GRAY_NORM} ${EXE_SOURCES_GRAY_NORM})
 target_include_directories(${EXE_NAME_GRAY_NORM} PUBLIC ${EXE_INCLUDE})
 target_link_libraries(${EXE_NAME_GRAY_NORM}
-  ${CUDA_LIBRARIES}
-  ${CUDNN_LIBRARY}
   ${CU_LIB_NAME}
   ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )
@@ -98,15 +100,6 @@ target_link_libraries(${EXE_NAME_GRAY_NORM}
 add_executable(${EXE_NAME_BGR2RGB_NORM} ${EXE_SOURCES_BGR2RGB_NORM})
 target_include_directories(${EXE_NAME_BGR2RGB_NORM} PUBLIC ${EXE_INCLUDE})
 target_link_libraries(${EXE_NAME_BGR2RGB_NORM}
-  ${CUDA_LIBRARIES}
-  ${CUDNN_LIBRARY}
   ${CU_LIB_NAME}
   ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )
-
-if(USE_OPENCV)
-  target_include_directories(${EXE_NAME_GRAY_NORM} PUBLIC ${OpenCV_INCLUDE_DIRS})
-  target_link_libraries(${EXE_NAME_GRAY_NORM} ${OpenCV_LIBS})
-  target_include_directories(${EXE_NAME_BGR2RGB_NORM} PUBLIC ${OpenCV_INCLUDE_DIRS})
-  target_link_libraries(${EXE_NAME_BGR2RGB_NORM} ${OpenCV_LIBS})
-endif()
