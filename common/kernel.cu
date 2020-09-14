@@ -22,6 +22,83 @@ void checkLastError(char const * func, const char *file, const int line, bool ab
 
 
 /*
+ * the center-aligned padding kernel
+ * no normalization and channels flip, but will do NHWC -> NCHW
+ */
+ __global__ void preprocess_center_aligned_padding_kernel(
+                                const int batch_size,
+                                const int input_row, 
+                                const int input_col, 
+                                const int output_row, 
+                                const int output_col, 
+                                const int channel_num, 
+                                const uint8_t padding_val, 
+                                uint8_t *d_out, 
+                                const uint8_t* const d_in
+                            ) {
+    // 2D Index of current thread
+    const int threadX = blockIdx.x * blockDim.x + threadIdx.x;
+    const int threadY = blockIdx.y * blockDim.y + threadIdx.y;
+    if(threadX >= output_col || threadY >= output_row * batch_size) {
+        return;
+    }
+
+    // calculate batch id and yIndex wrt each single batch
+    const int batch_id = static_cast<int>(threadY / output_row);
+    const int yIndex = threadY % output_row;
+    const int batch_pixel_num_in = input_col * input_row * channel_num;
+    const int batch_pixel_num_out = output_col * output_row * channel_num;
+
+    // center-aligned padding
+    const int offset_col = (output_col > input_col) ? (output_col - input_col) / 2 : 0;
+    const int offset_row = (output_row > input_row) ? (output_row - input_row) / 2 : 0;
+    
+    for (int c = 0; c < channel_num; c ++) {
+        //// NCHW order index
+        const int index_out = batch_id * batch_pixel_num_out + threadX + yIndex * output_col + c * output_col * output_row;
+        
+        //// no need padding region, locate within the input data buffer
+        if (threadX >= offset_col && threadX < offset_col + input_col &&
+                yIndex >= offset_row && yIndex < offset_row + input_row) 
+        {
+            //// MHWC order index
+            const int index_in = batch_id * batch_pixel_num_in + ( (threadX - offset_col) + (yIndex - offset_row) * input_col ) * channel_num;
+            d_out[index_out] = d_in[index_in + c];
+        } 
+
+        //// padding region, outside the input buffer
+        else 
+        {   
+            d_out[index_out] = padding_val;
+        }
+    }
+}
+
+
+void center_aligned_padding_cuda(const int batch_size, 
+        const int input_row, const int input_col, 
+        const int output_row, const int output_col, 
+        const int channel_num, const uint8_t padding_val, 
+        uint8_t *d_out, uint8_t *d_in, 
+        cudaStream_t &stream) {
+    
+    // define block size based on the output size
+    dim3 block(16, 16);
+    const int grid_x = (output_col - 1) / block.x + 1;
+    const int grid_y = (output_row * batch_size - 1) / block.y + 1;
+    dim3 grid(grid_x, grid_y);
+
+    preprocess_center_aligned_padding_kernel<<<grid, block, 0, stream>>>(
+        batch_size,
+        input_row, input_col, output_row, output_col, 
+        channel_num, padding_val, 
+        static_cast<uint8_t*>(d_out),
+        static_cast<const uint8_t* const>(d_in)
+    );
+}
+
+
+/*
  * normalize bgr image data and transfer the order to the bgr
  * 
  */

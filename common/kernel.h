@@ -11,22 +11,29 @@
 }
 
 
+/// \brief the padding kernel, no normalization and channels flip, but will do NHWC -> NCHW
+/// \brief which is more suitable to the nn work
+void center_aligned_padding_cuda(const int batch_size, 
+        const int input_row, const int input_col, 
+        const int output_row, const int output_col, 
+        const int channel_num, const uint8_t padding_val, 
+        uint8_t *d_out, uint8_t *d_in, 
+        cudaStream_t &stream);
+
 /// \brief keep the size and normalize bgr data, also transfer into the rgb order
 void normalize_bgr2rgb_cuda(const int batch_size, 
         const int data_row, const int data_col, 
         float *d_norm, uint8_t *d_in, 
         void *d_mean, void *d_std_frac, 
-        cudaStream_t &stream
-);
+        cudaStream_t &stream);
 
 
 /// \brief keep the size and normalize data
 void normalize_gray_cuda(const int batch_size, 
-	const int data_row, const int data_col, 
-	float *d_norm, uint8_t *d_in, 
-	void *d_mean, void *d_std_frac,
-	cudaStream_t &stream
-);
+        const int data_row, const int data_col, 
+        float *d_norm, uint8_t *d_in, 
+        void *d_mean, void *d_std_frac,
+        cudaStream_t &stream);
 
 
 /// \brief stop cpu working until the gpu work finish

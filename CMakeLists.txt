@@ -41,6 +41,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #--------------------------------------------------
 set(EXE_NAME_GRAY_NORM ${PROJECT_NAME}_gray_norm)
 set(EXE_NAME_BGR2RGB_NORM ${PROJECT_NAME}_bgr2rgb_norm)
+set(EXE_NAME_PADDING ${PROJECT_NAME}_center_aligned_padding)
 set(CU_LIB_NAME cu_kernels)
 
 # set exe files
@@ -49,6 +50,9 @@ set(EXE_SOURCES_GRAY_NORM
 )
 set(EXE_SOURCES_BGR2RGB_NORM
   ${PROJECT_SOURCE_DIR}/src/main_bgr2rgb_normalize.cpp
+)
+set(EXE_SOURCES_PADDING
+  ${PROJECT_SOURCE_DIR}/src/main_center_aligned_padding.cpp
 )
 set(CU_SOURCES
   ${PROJECT_SOURCE_DIR}/common/kernel.cu
@@ -100,6 +104,13 @@ target_link_libraries(${EXE_NAME_GRAY_NORM}
 add_executable(${EXE_NAME_BGR2RGB_NORM} ${EXE_SOURCES_BGR2RGB_NORM})
 target_include_directories(${EXE_NAME_BGR2RGB_NORM} PUBLIC ${EXE_INCLUDE})
 target_link_libraries(${EXE_NAME_BGR2RGB_NORM}
+  ${CU_LIB_NAME}
+  ${PROJECT_SOURCE_DIR}/common/utils.cpp
+)
+
+add_executable(${EXE_NAME_PADDING} ${EXE_SOURCES_PADDING})
+target_include_directories(${EXE_NAME_PADDING} PUBLIC ${EXE_INCLUDE})
+target_link_libraries(${EXE_NAME_PADDING}
   ${CU_LIB_NAME}
   ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )
