@@ -29,7 +29,7 @@ All the demo main codes are stored in the folder `src` that are implemented via 
 In addition, some of the cuda kernel implementation topics are listed below, will keep learning and uploading, <br>
 - [x] The gray image normalization, check `src/main_gray_normalize.cpp`
 - [x] The rgb image normalization, including channels flip, e.g. bgr to rgb, NHWC to NCHW, check `src/main_bgr2rgb_normalize.cpp`
-- [x] The center-aligned based image padding 
+- [x] The center-aligned based image padding, check `src/main_center_aligned_padding.cpp`
 - [ ] The biliner interpolation based image resize
 - [ ] The feature map postprocess for the detection scenario
 - [ ] The feature map postprocess for the classification scenario, using reducing algorithm
