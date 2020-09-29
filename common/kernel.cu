@@ -20,7 +20,145 @@ void checkLastError(char const * func, const char *file, const int line, bool ab
     }
 }
 
+template <typename T>
+__device__ __forceinline__ static T area_pixel_compute_source_index(T scale,
+                                        int dst_index,
+                                        bool align_corners,
+                                        bool cubic = false) {
+    if (align_corners) {
+        return scale * dst_index;
+    }
+    else {  // cube align, geometry center align
+        T src_idx = scale * (dst_index + static_cast<T>(0.5)) - static_cast<T>(0.5);
+        return (!cubic && src_idx < static_cast<T>(0)) ? static_cast<T>(0): src_idx;
+    }
+}
 
+
+template <typename T>
+__host__ __forceinline__ T area_pixel_compute_scale(int input_size, int output_size, bool align_corners) {
+    if(output_size > 1) {
+        return align_corners ? static_cast<T>(input_size - 1) / (output_size - 1) : static_cast<T>(input_size) / output_size;
+    }
+    else {
+        return static_cast<T>(0);
+    }
+}
+
+
+/*
+ * resize op using bilinear interpolation,
+ *
+ */
+__global__ void resize_kernel(
+                        const int batch_size,
+                        const float* d_in, 
+                        const int in_h, 
+                        const int in_w,
+                        const int channel_num, 
+                        float rheight, 
+                        float rwidth,
+                        float* d_out, 
+                        const int out_h, 
+                        const int out_w, 
+                        bool align_corners
+                    ) {
+
+    // 2D Index of current thread
+    const int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
+    const int threadY = blockIdx.y * blockDim.y + threadIdx.y;
+    const int yIndex = threadY % out_h;
+    const int batch_id = threadY / out_h;
+
+    // check border
+    if(xIndex >= out_w || threadY >= out_h * batch_size) {
+        return;
+    }
+
+    // input and output data byte size for each batch
+    const size_t in_pannel = channel_num * in_h * in_w;
+    const size_t out_pannel = out_h * out_w * channel_num;
+    
+    // same size, just assign values in target order
+    if(in_h == out_h && in_w == out_w) 
+    {
+        for(int c = 0; c < channel_num; c ++) 
+        {
+            //// data_in order: NHWC
+            //// data_out order: NCHW
+            const int idx_in_batch = (yIndex * in_w + xIndex) * channel_num + c;
+            const int idx_out_batch = c * out_h * out_w + yIndex * out_w + xIndex;
+            d_out[batch_id * out_pannel + idx_out_batch] = d_in[batch_id * in_pannel + idx_in_batch];
+        }
+    }
+
+    else 
+    {
+        // biliner interpolation, find position neighbors in d_in based on the thread idx
+        //// compute source yIndex and its neighbors' yIndex, also including lambdas
+        float y_src = area_pixel_compute_source_index<float>(rheight, yIndex, align_corners, /*cubic=*/false);
+        const int y_low_src = y_src;
+        const int y_high_src = y_low_src + ((y_low_src < in_h - 1) ? 1 : 0);
+        const float lambda_y_low = static_cast<float>(y_src - y_low_src);
+        const float lambda_y_high = static_cast<float>(1) - lambda_y_low;
+
+        //// compute source xIndex and its neighbors' xIndex, also including lambdas
+        float x_src = area_pixel_compute_source_index<float>(rwidth, xIndex, align_corners, /*cubic=*/false);
+        const int x_low_src = x_src;
+        const int x_high_src = x_low_src + ((x_low_src < in_w - 1) ? 1 : 0);
+        const float lambda_x_low = static_cast<float>(x_src - x_low_src);
+        const float lambda_x_high = static_cast<float>(1) - lambda_x_low;
+
+        //// other useful vars
+        for (int c = 0; c < channel_num; c ++) {
+            ////// determine the out data index, NCHW order
+            const int outIdx_batch = c * out_h * out_w + yIndex * out_w + xIndex;
+            
+            ////// interpolation, d_in is NHWC order
+            float val = lambda_y_high * (
+                    lambda_x_high * d_in[batch_id * in_pannel + y_low_src * in_w * channel_num + x_low_src * channel_num + c] + \
+                    lambda_x_low * d_in[batch_id * in_pannel + y_low_src * in_w * channel_num + x_high_src * channel_num + c]
+                ) + \
+                lambda_y_low * (
+                    lambda_x_high * d_in[batch_id * in_pannel + y_high_src * in_w * channel_num + x_low_src * channel_num + c] + \
+                    lambda_x_low * d_in[batch_id * in_pannel + y_high_src * in_w * channel_num + x_high_src * channel_num + c]
+                );
+
+            ////// assign res
+            d_out[batch_id * out_pannel + outIdx_batch] = static_cast<float>(val);
+        }
+    }
+}
+ 
+
+void resize_cuda(const int batch_size, 
+    const int input_row, const int input_col, 
+    const int output_row, const int output_col, 
+    const int channel_num, const bool align_corners, 
+    float* d_out, float* d_in,
+    cudaStream_t& stream) {
+    
+    dim3 block(16, 16);
+    const int grid_x = (output_col + block.x - 1) / block.x;
+    const int grid_y = (output_row * batch_size + block.y - 1) / block.y;
+    dim3 grid(grid_x, grid_y);
+
+    // compute height and width ratio, in_size / out_size
+    float ratio_h = area_pixel_compute_scale<float>(input_row, output_row, align_corners);
+    float ratio_w = area_pixel_compute_scale<float>(input_col, output_col, align_corners);
+    
+    resize_kernel<<<grid, block, 0, stream>>>(
+        batch_size,
+        static_cast<const float* const>(d_in), 
+        input_row, input_col, 
+        channel_num,
+        ratio_h, ratio_w,
+        static_cast<float*>(d_out), 
+        output_row, output_col, align_corners
+    );
+}
+
+ 
 /*
  * the center-aligned padding kernel
  * no normalization and channels flip, but will do NHWC -> NCHW
