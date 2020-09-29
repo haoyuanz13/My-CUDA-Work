@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     /*
         opencv version, cpu
     */
-    std::cout << "\n- Opencv center-aligned padding ... " << std::endl;
+    std::cout << "\n- Opencv bilinear-interpolation resize ... " << std::endl;
     cv::Mat demo_data_processed_opencv(data_height_out, data_width_out, CV_32FC3/*CV_8UC3*/);
 
     float time_process_sum_opencv = 0.0;
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
     /*
         GPU version
     */
-    std::cout << "\n- CUDA center-aligned padding ... " << std::endl;
+    std::cout << "\n- CUDA bilinear-interpolation resize ... " << std::endl;
     cv::Mat demo_data_0_processed_cuda(data_height_out, data_width_out, CV_32FC1);
     cv::Mat demo_data_1_processed_cuda(data_height_out, data_width_out, CV_32FC1);
     cv::Mat demo_data_2_processed_cuda(data_height_out, data_width_out, CV_32FC1);
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
     /*
         compare results betwwen opencv and speed-up cuda implementation
     */
-    std::cout << "\n- Compare Opencv and CUDA Padding Results ..." << std::endl;
+    std::cout << "\n- Compare Opencv and CUDA Resize Results ..." << std::endl;
     float diff_sum = 0.0;
     for (int row = 0; row < data_height_out; row ++) {
         for (int col = 0; col < data_width_out; col ++) {
