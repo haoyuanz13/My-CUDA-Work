@@ -52,13 +52,13 @@ __host__ __forceinline__ T area_pixel_compute_scale(int input_size, int output_s
  */
 __global__ void resize_kernel(
                         const int batch_size,
-                        const float* d_in, 
+                        const float *d_in, 
                         const int in_h, 
                         const int in_w,
                         const int channel_num, 
                         float rheight, 
                         float rwidth,
-                        float* d_out, 
+                        float *d_out, 
                         const int out_h, 
                         const int out_w, 
                         bool align_corners
@@ -135,8 +135,8 @@ void resize_cuda(const int batch_size,
     const int input_row, const int input_col, 
     const int output_row, const int output_col, 
     const int channel_num, const bool align_corners, 
-    float* d_out, float* d_in,
-    cudaStream_t& stream) {
+    float *d_out, float *d_in,
+    cudaStream_t &stream) {
     
     dim3 block(16, 16);
     const int grid_x = (output_col + block.x - 1) / block.x;
