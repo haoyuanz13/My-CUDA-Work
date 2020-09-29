@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
 
     // create pointers
     float *d_in;              // input demo data, d means device(gpu)
-    float *d_out;             // output demo data which has been padded
+    float *d_out;             // output demo data which has been resized
 
     // malloc gpu mems
     cudaCheckError(cudaMalloc((void**)&d_in, sizeof(float) * data_height_in * data_width_in * data_channel * batch_size));
