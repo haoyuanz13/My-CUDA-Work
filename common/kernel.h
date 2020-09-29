@@ -19,6 +19,7 @@ void resize_cuda(const int batch_size,
         float* d_out, float* d_in,
         cudaStream_t& stream);
 
+
 /// \brief the padding kernel, no normalization and channels flip, but will do NHWC -> NCHW
 /// \brief which is more suitable to the nn work
 void center_aligned_padding_cuda(const int batch_size, 
@@ -27,6 +28,7 @@ void center_aligned_padding_cuda(const int batch_size,
         const int channel_num, const uint8_t padding_val, 
         uint8_t *d_out, uint8_t *d_in, 
         cudaStream_t &stream);
+
 
 /// \brief keep the size and normalize bgr data, also transfer into the rgb order
 void normalize_bgr2rgb_cuda(const int batch_size, 
