@@ -47,6 +47,122 @@ __host__ __forceinline__ T area_pixel_compute_scale(int input_size, int output_s
 
 
 /*
+ * max elements extraction for the classification scenario
+ * using shared mem to implement the reduce algorithm
+ */
+__global__ void max_ele_extract_reduce_shared_mem_kernel(
+                                const int batch_size, 
+                                const int feat_map_row, 
+                                const int feat_map_col, 
+                                float *d_feat_map, 
+                                int *d_state_ids, 
+                                float *d_max_vals, 
+                                float *d_exp_val_sum
+                            ) {
+
+    // obtain block and thread index
+    const int state_idx = blockIdx.x;
+    const int prob_idx = threadIdx.x;
+    if (state_idx >= batch_size * feat_map_row || prob_idx >= blockDim.x) {
+        return;
+    }
+
+    // calculate feat map index
+    const int feat_map_index = state_idx * feat_map_col + prob_idx;
+
+    // build shared mems, dynamic
+    extern __shared__ char shared_mems[];                // malloc share mem for each block
+    float *d_feat_map_shared = (float*)shared_mems;      // cuda malloc for the 1st region
+    int *d_ids_counter_shared = (int*)&d_feat_map_shared[feat_map_col];  // cuda malloc for the 2nd region, starts from the addr at the end of the 1st block
+
+
+    //// reduce exp sum
+    d_feat_map_shared[prob_idx] = exp(d_feat_map[feat_map_index]);
+    __syncthreads();    //// sync among all threads within the current block, make sure d_feat_map_shared has valid exp vals within each block
+
+    for (int step = 64; step > 0; step >>= 1) {
+        if (prob_idx < step && (prob_idx + step) < feat_map_col) {
+            d_feat_map_shared[prob_idx] += d_feat_map_shared[prob_idx + step];
+        }
+        __syncthreads();    //// wait all other block threads to reach here, make sure all threads have been updated
+    }
+
+    //// update exp sum for the 1st thread
+    if (prob_idx == 0) {
+        d_exp_val_sum[state_idx] = d_feat_map_shared[0];
+    }
+
+
+    //// reduce max element extraction, update shared mem again first
+    d_feat_map_shared[prob_idx] = d_feat_map[feat_map_index];
+    d_ids_counter_shared[prob_idx] = prob_idx;
+    __syncthreads();
+
+    float pivot_val, comp_val;
+    int pivot_feature_idx, comp_feature_idx;
+    int need_replace_flag;
+    int d_state_id;
+    float d_max_val_temp;
+
+    for (int step = 64; step > 0; step >>= 1) {
+        if (prob_idx < step && (prob_idx + step) < feat_map_col) {
+            pivot_val = d_feat_map_shared[prob_idx];
+            pivot_feature_idx = d_ids_counter_shared[prob_idx];
+
+            comp_val = d_feat_map_shared[prob_idx + step];
+            comp_feature_idx = d_ids_counter_shared[prob_idx + step];
+
+            need_replace_flag = comp_val > pivot_val;
+
+            // update feat map buffer
+            d_feat_map_shared[prob_idx] = need_replace_flag * comp_val \
+                + (1 - need_replace_flag) * pivot_val;
+
+            // update loop ids counter
+            d_ids_counter_shared[prob_idx] = need_replace_flag * comp_feature_idx \
+                + (1 - need_replace_flag) * pivot_feature_idx;
+
+            // get the max prob
+            d_max_val_temp = d_feat_map_shared[prob_idx];
+
+            // get the max index
+            d_state_id = d_ids_counter_shared[prob_idx];
+        }
+
+        // make sure all threads within the same block have complete the current step work,
+        // and then to the next step
+        __syncthreads();
+    }
+
+    if (prob_idx == 0) {
+        d_max_vals[state_idx] = d_max_val_temp;
+        d_state_ids[state_idx] = d_state_id;
+    }
+
+}
+
+
+void max_ele_extract_reduce_shared_mem_cuda(const int batch_size, 
+    const int feat_map_row, const int feat_map_col, 
+    float *d_feat_map, 
+    int *d_state_ids, float *d_max_vals, float *d_exp_val_sum, 
+    cudaStream_t &stream) {
+    
+    // define threads and block size, 2d map
+    // here we know the featmap col is 95, so define size <feat_map_row, 64>
+    max_ele_extract_reduce_shared_mem_kernel<<<feat_map_row * batch_size, feat_map_col, feat_map_col * sizeof(float) + feat_map_col * sizeof(int), stream>>>(
+        batch_size, 
+        feat_map_row, 
+        feat_map_col, 
+        static_cast<float*>(d_feat_map), 
+        static_cast<int*>(d_state_ids), 
+        static_cast<float*>(d_max_vals), 
+        static_cast<float*>(d_exp_val_sum)
+    );
+}
+
+
+/*
  * resize op using bilinear interpolation,
  *
  */

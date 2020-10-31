@@ -43,6 +43,7 @@ set(EXE_NAME_GRAY_NORM ${PROJECT_NAME}_gray_norm)
 set(EXE_NAME_BGR2RGB_NORM ${PROJECT_NAME}_bgr2rgb_norm)
 set(EXE_NAME_PADDING ${PROJECT_NAME}_center_aligned_padding)
 set(EXE_NAME_RESIZE ${PROJECT_NAME}_bilinear_inter_resize)
+set(EXE_NAME_POST_CLS ${PROJECT_NAME}_reduce_post_cls)
 set(CU_LIB_NAME cu_kernels)
 
 # set exe files
@@ -57,6 +58,9 @@ set(EXE_SOURCES_PADDING
 )
 set(EXE_SOURCES_RESIZE
   ${PROJECT_SOURCE_DIR}/src/main_bilinear_inter_resize.cpp
+)
+set(EXE_SOURCES_POST_CLS
+  ${PROJECT_SOURCE_DIR}/src/main_reduce_postprocess_cls.cpp
 )
 set(CU_SOURCES
   ${PROJECT_SOURCE_DIR}/common/kernel.cu
@@ -122,6 +126,13 @@ target_link_libraries(${EXE_NAME_PADDING}
 add_executable(${EXE_NAME_RESIZE} ${EXE_SOURCES_RESIZE})
 target_include_directories(${EXE_NAME_RESIZE} PUBLIC ${EXE_INCLUDE})
 target_link_libraries(${EXE_NAME_RESIZE}
+  ${CU_LIB_NAME}
+  ${PROJECT_SOURCE_DIR}/common/utils.cpp
+)
+
+add_executable(${EXE_NAME_POST_CLS} ${EXE_SOURCES_POST_CLS})
+target_include_directories(${EXE_NAME_POST_CLS} PUBLIC ${EXE_INCLUDE})
+target_link_libraries(${EXE_NAME_POST_CLS}
   ${CU_LIB_NAME}
   ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )

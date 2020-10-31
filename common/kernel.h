@@ -11,6 +11,14 @@
 }
 
 
+/// \brief reduce method to extract feature map, using shared memeory
+void max_ele_extract_reduce_shared_mem_cuda(const int batch_size, 
+        const int feat_map_row, const int feat_map_col, 
+        float *d_feat_map, 
+        int *d_state_ids, float *d_max_vals, float *d_exp_val_sum, 
+        cudaStream_t &stream);
+
+
 /// \brief resize op using bilinear interpolation, take the float type as the demo
 void resize_cuda(const int batch_size, 
         const int input_row, const int input_col, 
