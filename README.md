@@ -32,7 +32,8 @@ In addition, some of the cuda kernel implementation topics are listed below, wil
 - [x] The center-aligned based image padding, check `src/main_center_aligned_padding.cpp`
 - [x] The biliner interpolation based image resize, check `src/main_bilinear_inter_resize.cpp`
 - [x] The feature map postprocess for the classification scenario, using reducing algorithm, check `src/main_reduce_postprocess_cls.cpp`
-- [ ] The matrix computation kernels
+- [ ] The some helpful matrix computation kernels
+- [ ] The image dilate and erode kernel
 
 
 ## More things
