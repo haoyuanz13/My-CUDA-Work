@@ -3,6 +3,7 @@
 
 #include "kernel.h"
 
+#define BLOCK_SIZE 32
 
 // To be used after calls that do not return an error code, ex. kernels to check kernel launch errors
 void checkLastError(char const * func, const char *file, const int line, bool abort = true);
@@ -43,6 +44,204 @@ __host__ __forceinline__ T area_pixel_compute_scale(int input_size, int output_s
     else {
         return static_cast<T>(0);
     }
+}
+
+
+/*
+ * matrix transpose using the shared memory and naive method
+ */
+__global__ void mat_transpose_shared_mem_naive_kernel(
+                            const float *d_mat,  
+                            float *d_out, 
+                            const int row, 
+                            const int col
+                        ) {
+    // the thread map is built based on the output size
+    int ind_x = blockIdx.x * blockDim.x + threadIdx.x;
+    int ind_y = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    // build shared mem block
+    __shared__ float mat_block[BLOCK_SIZE][BLOCK_SIZE + 1];
+    if ((ind_x < col) && (ind_y < row))
+    {
+        mat_block[threadIdx.y][threadIdx.x] = d_mat[col * ind_y + ind_x];
+    }
+
+    __syncthreads();
+
+    // assign res for each block shared mem elements
+    if ((ind_x < col) && (ind_y < row))
+    {
+        d_out[row * ind_x + ind_y] = mat_block[threadIdx.y][threadIdx.x];
+    }
+}
+
+void mat_transpose_shared_mem_naive_cuda(const int row, const int col,
+    float *d_mat, float *d_out,
+    cudaStream_t &stream) 
+{
+    dim3 block(BLOCK_SIZE, BLOCK_SIZE);
+    const int grid_x = (col - 1) / block.x + 1;
+    const int grid_y = (row - 1) / block.y + 1;
+    dim3 grid(grid_x, grid_y);
+
+    mat_transpose_shared_mem_naive_kernel<<<grid, block, 0, stream>>>(
+        static_cast<const float* const>(d_mat),
+        static_cast<float*>(d_out), 
+        row, col);
+}
+
+
+/*
+ * matrix transpose using the global memory
+ */
+__global__ void mat_transpose_kernel(
+                            const float *d_mat,  
+                            float *d_out, 
+                            const int row, 
+                            const int col
+                        ) {
+    // the thread map is built based on the output size
+    int ind_x = blockIdx.x * blockDim.x + threadIdx.x;
+    int ind_y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if ((ind_x < col) && (ind_y < row))
+    {
+        d_out[row * ind_x + ind_y] = d_mat[col * ind_y + ind_x];
+    }
+}
+
+void mat_transpose_cuda(const int row, const int col,
+    float *d_mat, float *d_out,
+    cudaStream_t &stream) 
+{
+    dim3 block(32, 32);
+    const int grid_x = (col - 1) / block.x + 1;
+    const int grid_y = (row - 1) / block.y + 1;
+    dim3 grid(grid_x, grid_y);
+
+    mat_transpose_kernel<<<grid, block, 0, stream>>>(
+        static_cast<const float* const>(d_mat),
+        static_cast<float*>(d_out), 
+        row, col);
+}
+
+
+/*
+ * matrix multiplication using the global memory
+ */
+__global__ void mat_multiply_share_mem_kernel(
+                            const float *d_A, 
+                            const float *d_B, 
+                            float *d_C, 
+                            const int row_A, 
+                            const int col_A, 
+                            const int col_B
+                        ) {
+    // obtain the block id wrt the whole grid
+    int bx = blockIdx.x;    // along col dim
+    int by = blockIdx.y;    // along row dim
+
+    // obtain the thread id wrt the each block
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+
+    // pivot id for the A matrix with the step
+    int a_begin = col_A * BLOCK_SIZE * by;
+    int a_end   = a_begin + col_A - 1;
+    int a_step  = BLOCK_SIZE;
+    
+    // pivot id for the B matrix with the step
+    int b_begin = BLOCK_SIZE * bx;
+    int b_step  = BLOCK_SIZE * col_B;
+    
+    // each thread has its sum res
+    float sum = 0.0f;
+    for (int a = a_begin, b = b_begin; a <= a_end; a += a_step, b += b_step) 
+    {
+        //// build shared mem
+        __shared__ float A_shared[BLOCK_SIZE][BLOCK_SIZE + 1];   // add 1 for the bank conflict problem
+        __shared__ float B_shared[BLOCK_SIZE][BLOCK_SIZE + 1];
+        
+        //// assign vals to the shared mem
+        A_shared[ty][tx] = d_A[a + col_A * ty + tx];
+        B_shared[ty][tx] = d_B[b + col_B * ty + tx];
+        __syncthreads();
+        
+        //// update sum via current shared mem multiplication
+        for (int k = 0; k < BLOCK_SIZE; k ++) 
+        {
+            sum += A_shared[ty][k] * B_shared[k][tx];
+        }
+        __syncthreads();
+    }
+ 
+    int c_begin = col_B * BLOCK_SIZE * by + BLOCK_SIZE * bx;
+    d_C[c_begin + col_B * ty + tx] = sum;
+}
+
+
+void mat_multiply_share_mem_cuda(const int row_A, const int col_A, const int col_B,  
+    float *d_mat_A, float *d_mat_B, float *d_mat_C, 
+    cudaStream_t &stream) 
+{
+    // for this kernel, block size x ahd y must be the same
+    dim3 block(BLOCK_SIZE, BLOCK_SIZE);
+
+    // here we define x is the col dimension
+    const int grid_x = (col_B - 1) / block.x + 1;
+    const int grid_y = (row_A - 1) / block.y + 1;
+    dim3 grid(grid_x, grid_y);
+
+    mat_multiply_share_mem_kernel<<<grid, block, 0, stream>>>(
+        static_cast<const float* const>(d_mat_A),
+        static_cast<const float* const>(d_mat_B), 
+        static_cast<float*>(d_mat_C), 
+        row_A, col_A, col_B);
+}
+
+
+/*
+ * matrix multiplication using the global memory
+ */
+__global__ void mat_multiply_kernel(
+                            const float *d_A, 
+                            const float *d_B, 
+                            float *d_C, 
+                            const int row_A, 
+                            const int col_A, 
+                            const int col_B
+                        ) {
+    // the thread map is built based on the output size
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+    // calculate each position
+    float sum = 0.0;
+    for (int k = 0; k < col_A; k++) 
+    {
+        //// row major
+        sum += d_A[row * col_A + k] * d_B[k * col_B + col];
+    }
+
+    // assign res
+    d_C[row * col_B + col] = sum;
+}
+
+void mat_multiply_cuda(const int row_A, const int col_A, const int col_B,  
+    float *d_mat_A, float *d_mat_B, float *d_mat_C, 
+    cudaStream_t &stream) 
+{
+    dim3 block(32, 32);
+    const int grid_x = (col_B - 1) / block.x + 1;
+    const int grid_y = (row_A - 1) / block.y + 1;
+    dim3 grid(grid_x, grid_y);
+
+    mat_multiply_kernel<<<grid, block, 0, stream>>>(
+        static_cast<const float* const>(d_mat_A),
+        static_cast<const float* const>(d_mat_B), 
+        static_cast<float*>(d_mat_C), 
+        row_A, col_A, col_B);
 }
 
 

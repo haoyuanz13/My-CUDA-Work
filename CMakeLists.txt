@@ -44,6 +44,8 @@ set(EXE_NAME_BGR2RGB_NORM ${PROJECT_NAME}_bgr2rgb_norm)
 set(EXE_NAME_PADDING ${PROJECT_NAME}_center_aligned_padding)
 set(EXE_NAME_RESIZE ${PROJECT_NAME}_bilinear_inter_resize)
 set(EXE_NAME_POST_CLS ${PROJECT_NAME}_reduce_post_cls)
+set(EXE_NAME_MAT_MULTI ${PROJECT_NAME}_matrix_multi)
+set(EXE_NAME_MAT_TRANS ${PROJECT_NAME}_matrix_trans)
 set(CU_LIB_NAME cu_kernels)
 
 # set exe files
@@ -62,6 +64,12 @@ set(EXE_SOURCES_RESIZE
 set(EXE_SOURCES_POST_CLS
   ${PROJECT_SOURCE_DIR}/src/main_reduce_postprocess_cls.cpp
 )
+set(EXE_SOURCES_MAT_MULTI
+  ${PROJECT_SOURCE_DIR}/src/main_matrix_multiplication.cpp
+)
+set(EXE_SOURCES_MAT_TRANS
+  ${PROJECT_SOURCE_DIR}/src/main_matrix_transpose.cpp
+)
 set(CU_SOURCES
   ${PROJECT_SOURCE_DIR}/common/kernel.cu
 )
@@ -70,7 +78,6 @@ set(CU_SOURCES
 set(EXE_INCLUDE
   ${PROJECT_SOURCE_DIR}/common
 )
-
 
 # OpenCV deps
 if(USE_OPENCV)
@@ -82,7 +89,6 @@ if(OpenCV_FOUND)
   link_libraries(${OpenCV_LIBS})
 endif()
 endif(USE_OPENCV)
-
 
 # CUDA and cuDNN deps
 find_package(CUDA 10.0 REQUIRED)
@@ -96,6 +102,9 @@ if(CUDA_FOUND)
     ${CUDNN_LIBRARY}
   )
 endif()
+
+# Eigen
+find_package(Eigen3 REQUIRED)
 
 
 # --------------------------------
@@ -133,6 +142,20 @@ target_link_libraries(${EXE_NAME_RESIZE}
 add_executable(${EXE_NAME_POST_CLS} ${EXE_SOURCES_POST_CLS})
 target_include_directories(${EXE_NAME_POST_CLS} PUBLIC ${EXE_INCLUDE})
 target_link_libraries(${EXE_NAME_POST_CLS}
+  ${CU_LIB_NAME}
+  ${PROJECT_SOURCE_DIR}/common/utils.cpp
+)
+
+add_executable(${EXE_NAME_MAT_MULTI} ${EXE_SOURCES_MAT_MULTI})
+target_include_directories(${EXE_NAME_MAT_MULTI} PUBLIC ${EXE_INCLUDE})
+target_link_libraries(${EXE_NAME_MAT_MULTI}
+  ${CU_LIB_NAME}
+  ${PROJECT_SOURCE_DIR}/common/utils.cpp
+)
+
+add_executable(${EXE_NAME_MAT_TRANS} ${EXE_SOURCES_MAT_TRANS})
+target_include_directories(${EXE_NAME_MAT_TRANS} PUBLIC ${EXE_INCLUDE})
+target_link_libraries(${EXE_NAME_MAT_TRANS}
   ${CU_LIB_NAME}
   ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )

@@ -11,6 +11,30 @@
 }
 
 
+/// \brief matrix transpose using the shared memory and naive implementation
+void mat_transpose_shared_mem_naive_cuda(const int row, const int col,
+        float *d_mat, float *d_out,
+        cudaStream_t &stream);
+
+
+/// \brief matrix transpose using the global memory
+void mat_transpose_cuda(const int row, const int col,
+        float *d_mat, float *d_out,
+        cudaStream_t &stream);
+
+
+/// \brief matrix multiplication using the shared memory
+void mat_multiply_share_mem_cuda(const int row_A, const int col_A, const int col_B,  
+        float *d_mat_A, float *d_mat_B, float *d_mat_C, 
+        cudaStream_t &stream);
+
+
+/// \brief matrix multiplication using the global memory
+void mat_multiply_cuda(const int row_A, const int col_A, const int col_B,  
+        float *d_mat_A, float *d_mat_B, float *d_mat_C, 
+        cudaStream_t &stream);
+
+
 /// \brief reduce method to extract feature map, using shared memeory
 void max_ele_extract_reduce_shared_mem_cuda(const int batch_size, 
         const int feat_map_row, const int feat_map_col, 
