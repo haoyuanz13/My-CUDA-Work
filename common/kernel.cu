@@ -362,6 +362,86 @@ void max_ele_extract_reduce_shared_mem_cuda(const int batch_size,
 
 
 /*
+ * implement the cv::copyTo and speed up
+ * 
+ */
+ __global__ void copyto_hwc2chw_kernel(
+                                const int d_dst_row, 
+                                const int d_dst_col, 
+                                const int d_roi_row, 
+                                const int d_roi_col, 
+                                const int offset_row, 
+                                const int offset_col, 
+                                const int data_channel, 
+                                uint8_t *d_out, 
+                                const uint8_t* const d_src, 
+                                const uint8_t* const d_roi
+                            ) {
+    // 2D Index of current thread wrt the d_out size
+    const int threadX = blockIdx.x * blockDim.x + threadIdx.x;
+    const int threadY = blockIdx.y * blockDim.y + threadIdx.y;
+    if(threadX >= d_dst_col || threadY >= d_dst_row) return;
+
+    // calculate batch id and yIndex wrt each single batch
+    const int batch_id = static_cast<int>(threadY / d_dst_row);
+    const int threadY_wrt_batch = threadY % d_dst_row;
+    const int batch_pixel_out_num = d_dst_row * d_dst_col * data_channel;
+    const int thread_ind_wrt_batch = threadX + threadY_wrt_batch * d_dst_col;
+
+    // check roi region
+    const bool x_in_roi = (threadX >= offset_col) && (threadX < offset_col + d_roi_col);
+    const bool y_in_roi = (threadY_wrt_batch >= offset_row) && (threadY_wrt_batch < offset_row + d_roi_row);
+    const bool id_in_roi = x_in_roi && y_in_roi;
+
+    for (int c = 0; c < data_channel; c ++) 
+    {
+        int index_out = batch_id * batch_pixel_out_num + thread_ind_wrt_batch + c * d_dst_col * d_dst_row;
+
+        // din region, extract val from d_roi data
+        if (id_in_roi) 
+        {
+            // offset compute
+            const int din_thread_ind_wrt_batch = (threadX - offset_col) + (threadY_wrt_batch - offset_row) * d_roi_col;
+            int index_roi = batch_id * d_roi_row * d_roi_col * data_channel + din_thread_ind_wrt_batch * data_channel;
+            d_out[index_out] = static_cast<uint8_t>(d_roi[index_roi + c]);
+        }
+
+        // source image region
+        else 
+        {
+            int index_in = batch_id * batch_pixel_out_num + thread_ind_wrt_batch * data_channel;
+            d_out[index_out] = static_cast<uint8_t>(d_src[index_in + c]);
+        }
+    }
+}
+
+
+void copyto_hwc2chw_cuda(const int data_dst_row, const int data_dst_col, 
+    const int data_roi_row, const int data_roi_col, 
+    const int data_channel, 
+    const int offset_row, const int offset_col, 
+    uint8_t *d_out, uint8_t *d_src, uint8_t *d_roi, 
+    cudaStream_t &stream) {
+
+    // define block size
+    dim3 block(16, 16);
+    const int grid_x = (data_dst_col - 1) / block.x + 1;
+    const int grid_y = (data_dst_row - 1) / block.y + 1;
+    dim3 grid(grid_x, grid_y);
+
+    copyto_hwc2chw_kernel<<<grid, block, 0, stream>>>(
+        data_dst_row, data_dst_col, 
+        data_roi_row, data_roi_col, 
+        offset_row, offset_col, 
+        data_channel, 
+        static_cast<uint8_t*>(d_out),
+        static_cast<const uint8_t* const>(d_src), 
+        static_cast<const uint8_t* const>(d_roi)
+    );
+}
+
+
+/*
  * resize op using bilinear interpolation,
  *
  */

@@ -43,6 +43,15 @@ void max_ele_extract_reduce_shared_mem_cuda(const int batch_size,
         cudaStream_t &stream);
 
 
+/// \brief implement the cv::copyTo and speed up
+void copyto_hwc2chw_cuda(const int data_dst_row, const int data_dst_col, 
+        const int data_roi_row, const int data_roi_col, 
+        const int data_channel, 
+        const int offset_row, const int offset_col, 
+        uint8_t *d_out, uint8_t *d_src, uint8_t *d_roi, 
+        cudaStream_t &stream);
+
+
 /// \brief resize op using bilinear interpolation, take the float type as the demo
 void resize_cuda(const int batch_size, 
         const int input_row, const int input_col, 
