@@ -30,6 +30,7 @@ In addition, some of the cuda kernel implementation topics are listed below, wil
 - [x] The gray image normalization, check `src/main_gray_normalize.cpp`
 - [x] The rgb image normalization, including channels flip, e.g. bgr to rgb, NHWC to NCHW, check `src/main_bgr2rgb_normalize.cpp`
 - [x] The center-aligned based image padding, check `src/main_center_aligned_padding.cpp`
+- [x] The cv::copyTo cuda version implementation, check `src/main_copyto.cpp`
 - [x] The biliner interpolation based image resize, check `src/main_bilinear_inter_resize.cpp`
 - [x] The feature map postprocess for the classification scenario, using reducing algorithm, check `src/main_reduce_postprocess_cls.cpp`
 - [x] The matrix transpose operation kernel implementation, check `src/main_matrix_transpose.cpp`
