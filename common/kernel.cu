@@ -50,6 +50,7 @@ __host__ __forceinline__ T area_pixel_compute_scale(int input_size, int output_s
 /*
  * matrix transpose using the shared memory and naive method
  */
+/*
 __global__ void mat_transpose_shared_mem_naive_kernel(
                             const float *d_mat,  
                             float *d_out, 
@@ -73,6 +74,38 @@ __global__ void mat_transpose_shared_mem_naive_kernel(
     if ((ind_x < col) && (ind_y < row))
     {
         d_out[row * ind_x + ind_y] = mat_block[threadIdx.y][threadIdx.x];
+    }
+}
+*/
+
+__global__ void mat_transpose_shared_mem_naive_kernel(
+                            const float *d_mat,  
+                            float *d_out, 
+                            const int row, 
+                            const int col
+                        ) {
+    // the thread map is built based on the output size
+    unsigned int ind_x = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int ind_y = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    // build shared mem block
+    __shared__ float mat_block[BLOCK_SIZE][BLOCK_SIZE + 1];
+    if ((ind_x < col) && (ind_y < row))
+    {
+	unsigned int index_in = ind_y * col + ind_x;
+        mat_block[threadIdx.y][threadIdx.x] = d_mat[index_in];
+    }
+
+    __syncthreads();
+
+    // assign res for each block shared mem elements
+    ind_x = blockIdx.y * blockDim.y + threadIdx.x;
+    ind_y = blockIdx.x * blockDim.x + threadIdx.y;
+
+    if ((ind_x < row) && (ind_y < col))
+    {
+	unsigned int index_out = ind_y * row + ind_x;
+        d_out[index_out] = mat_block[threadIdx.x][threadIdx.y];
     }
 }
 
