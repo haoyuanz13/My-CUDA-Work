@@ -35,6 +35,7 @@ In addition, some of the cuda kernel implementation topics are listed below, wil
 - [x] The feature map postprocess for the classification scenario, using reducing algorithm, check `src/main_reduce_postprocess_cls.cpp`
 - [x] The matrix transpose operation kernel implementation, check `src/main_matrix_transpose.cpp`
 - [x] The matrix multiplication operation kernel implementation, check `src/main_matrix_multiplication.cpp`
+- [x] The bitonic sort kernel implementation, check `src/main_bitonic_sort.cpp`
 - [ ] The image dilate and erode kernel
 
 
