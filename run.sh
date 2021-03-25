@@ -7,6 +7,7 @@ EXE_FILE_NAME=my_cuda_gray_norm
 # EXE_FILE_NAME=my_cuda_reduce_post_cls
 # EXE_FILE_NAME=my_cuda_matrix_multi
 # EXE_FILE_NAME=my_cuda_matrix_trans
+# EXE_FILE_NAME=my_cuda_bitonic_sort
 echo "- exe file name:" ${EXE_FILE_NAME}
 
 # execution

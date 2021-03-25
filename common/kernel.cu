@@ -48,6 +48,57 @@ __host__ __forceinline__ T area_pixel_compute_scale(int input_size, int output_s
 
 
 /*
+ * bitonic sort kernel
+ */
+__global__ void bitonic_sort_kernel(
+                            int *d_arr, 
+                            const int len
+                        ) {
+    // the thread map is built based on the output size
+    unsigned int tid = threadIdx.x;
+    
+    // build shared mem block
+    extern __shared__ int shared_arr[];
+    if (tid < len) shared_arr[tid] = d_arr[tid];
+    __syncthreads();
+
+    // parallel bitonic sort
+    for (unsigned int k = 2; k <= len; k *= 2) 
+    {
+        for (unsigned int j = k >> 1; j > 0; j = j >> 1) 
+        {
+            unsigned ixj = tid ^ j;
+            if (ixj > tid) 
+            {
+                if ( ((tid & k) == 0) && (shared_arr[tid] > shared_arr[ixj]) ) 
+                {
+                    int tmp = shared_arr[tid];
+                    shared_arr[tid] = shared_arr[ixj];
+                    shared_arr[ixj] = tmp;
+                }
+
+                if ( ((tid & k) != 0) && (shared_arr[tid] < shared_arr[ixj]) ) 
+                {
+                    int tmp = shared_arr[tid];
+                    shared_arr[tid] = shared_arr[ixj];
+                    shared_arr[ixj] = tmp;
+                }
+            }
+            __syncthreads();
+        }
+    }
+
+    d_arr[tid] = shared_arr[tid];
+}
+
+void bitonic_sort_cuda(const int len, int *d_arr, cudaStream_t &stream)
+{
+    bitonic_sort_kernel<<<1, len, sizeof(int) * len, stream>>>(
+        static_cast<int*>(d_arr), len);
+}
+
+
+/*
  * matrix transpose using the shared memory and naive method
  */
 /*
@@ -92,7 +143,7 @@ __global__ void mat_transpose_shared_mem_naive_kernel(
     __shared__ float mat_block[BLOCK_SIZE][BLOCK_SIZE + 1];
     if ((ind_x < col) && (ind_y < row))
     {
-	unsigned int index_in = ind_y * col + ind_x;
+        unsigned int index_in = ind_y * col + ind_x;
         mat_block[threadIdx.y][threadIdx.x] = d_mat[index_in];
     }
 
@@ -104,7 +155,7 @@ __global__ void mat_transpose_shared_mem_naive_kernel(
 
     if ((ind_x < row) && (ind_y < col))
     {
-	unsigned int index_out = ind_y * row + ind_x;
+        unsigned int index_out = ind_y * row + ind_x;
         d_out[index_out] = mat_block[threadIdx.x][threadIdx.y];
     }
 }

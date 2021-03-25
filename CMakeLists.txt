@@ -47,6 +47,7 @@ set(EXE_NAME_RESIZE ${PROJECT_NAME}_bilinear_inter_resize)
 set(EXE_NAME_POST_CLS ${PROJECT_NAME}_reduce_post_cls)
 set(EXE_NAME_MAT_MULTI ${PROJECT_NAME}_matrix_multi)
 set(EXE_NAME_MAT_TRANS ${PROJECT_NAME}_matrix_trans)
+set(EXE_NAME_BITONIC_SORT ${PROJECT_NAME}_bitonic_sort)
 set(CU_LIB_NAME cu_kernels)
 
 # set exe files
@@ -58,6 +59,7 @@ set(EXE_SOURCES_RESIZE ${PROJECT_SOURCE_DIR}/src/main_bilinear_inter_resize.cpp)
 set(EXE_SOURCES_POST_CLS ${PROJECT_SOURCE_DIR}/src/main_reduce_postprocess_cls.cpp)
 set(EXE_SOURCES_MAT_MULTI ${PROJECT_SOURCE_DIR}/src/main_matrix_multiplication.cpp)
 set(EXE_SOURCES_MAT_TRANS ${PROJECT_SOURCE_DIR}/src/main_matrix_transpose.cpp)
+set(EXE_SOURCES_BITONIC_SORT ${PROJECT_SOURCE_DIR}/src/main_bitonic_sort.cpp)
 set(CU_SOURCES ${PROJECT_SOURCE_DIR}/common/kernel.cu)
 
 # set exe includes
@@ -149,6 +151,13 @@ target_link_libraries(${EXE_NAME_MAT_MULTI}
 add_executable(${EXE_NAME_MAT_TRANS} ${EXE_SOURCES_MAT_TRANS})
 target_include_directories(${EXE_NAME_MAT_TRANS} PUBLIC ${EXE_INCLUDE})
 target_link_libraries(${EXE_NAME_MAT_TRANS}
+  ${CU_LIB_NAME}
+  ${PROJECT_SOURCE_DIR}/common/utils.cpp
+)
+
+add_executable(${EXE_NAME_BITONIC_SORT} ${EXE_SOURCES_BITONIC_SORT})
+target_include_directories(${EXE_NAME_BITONIC_SORT} PUBLIC ${EXE_INCLUDE})
+target_link_libraries(${EXE_NAME_BITONIC_SORT}
   ${CU_LIB_NAME}
   ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )

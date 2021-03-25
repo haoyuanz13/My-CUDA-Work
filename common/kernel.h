@@ -11,6 +11,11 @@
 }
 
 
+/// \brief bitonic sort cuda implementation
+void bitonic_sort_cuda(const int len, int *d_arr, 
+        cudaStream_t &stream);
+
+
 /// \brief matrix transpose using the shared memory and naive implementation
 void mat_transpose_shared_mem_naive_cuda(const int row, const int col,
         float *d_mat, float *d_out,
