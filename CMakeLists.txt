@@ -43,6 +43,7 @@ set(EXE_NAME_GRAY_NORM ${PROJECT_NAME}_gray_norm)
 set(EXE_NAME_BGR2RGB_NORM ${PROJECT_NAME}_bgr2rgb_norm)
 set(EXE_NAME_PADDING ${PROJECT_NAME}_center_aligned_padding)
 set(EXE_NAME_COPYTO ${PROJECT_NAME}_copyto)
+set(EXE_NAME_MORP ${PROJECT_NAME}_erode_dilate)
 set(EXE_NAME_RESIZE ${PROJECT_NAME}_bilinear_inter_resize)
 set(EXE_NAME_POST_CLS ${PROJECT_NAME}_reduce_post_cls)
 set(EXE_NAME_MAT_MULTI ${PROJECT_NAME}_matrix_multi)
@@ -55,12 +56,16 @@ set(EXE_SOURCES_GRAY_NORM ${PROJECT_SOURCE_DIR}/src/main_gray_normalize.cpp)
 set(EXE_SOURCES_BGR2RGB_NORM ${PROJECT_SOURCE_DIR}/src/main_bgr2rgb_normalize.cpp)
 set(EXE_SOURCES_PADDING ${PROJECT_SOURCE_DIR}/src/main_center_aligned_padding.cpp)
 set(EXE_SOURCES_COPYTO ${PROJECT_SOURCE_DIR}/src/main_copyto.cpp)
+set(EXE_SOURCES_MORP ${PROJECT_SOURCE_DIR}/src/main_erode_dilate.cpp)
 set(EXE_SOURCES_RESIZE ${PROJECT_SOURCE_DIR}/src/main_bilinear_inter_resize.cpp)
 set(EXE_SOURCES_POST_CLS ${PROJECT_SOURCE_DIR}/src/main_reduce_postprocess_cls.cpp)
 set(EXE_SOURCES_MAT_MULTI ${PROJECT_SOURCE_DIR}/src/main_matrix_multiplication.cpp)
 set(EXE_SOURCES_MAT_TRANS ${PROJECT_SOURCE_DIR}/src/main_matrix_transpose.cpp)
 set(EXE_SOURCES_BITONIC_SORT ${PROJECT_SOURCE_DIR}/src/main_bitonic_sort.cpp)
-set(CU_SOURCES ${PROJECT_SOURCE_DIR}/common/kernel.cu)
+set(CU_SOURCES 
+  ${PROJECT_SOURCE_DIR}/common/kernel.cu
+  ${PROJECT_SOURCE_DIR}/common/morphology.cu
+)
 
 # set exe includes
 set(EXE_INCLUDE
@@ -123,6 +128,13 @@ target_link_libraries(${EXE_NAME_PADDING}
 add_executable(${EXE_NAME_COPYTO} ${EXE_SOURCES_COPYTO})
 target_include_directories(${EXE_NAME_COPYTO} PUBLIC ${EXE_INCLUDE})
 target_link_libraries(${EXE_NAME_COPYTO}
+  ${CU_LIB_NAME}
+  ${PROJECT_SOURCE_DIR}/common/utils.cpp
+)
+
+add_executable(${EXE_NAME_MORP} ${EXE_SOURCES_MORP})
+target_include_directories(${EXE_NAME_MORP} PUBLIC ${EXE_INCLUDE})
+target_link_libraries(${EXE_NAME_MORP}
   ${CU_LIB_NAME}
   ${PROJECT_SOURCE_DIR}/common/utils.cpp
 )
