@@ -37,6 +37,7 @@ In addition, some of the cuda kernel implementation topics are listed below, wil
 - [x] The matrix multiplication operation kernel implementation, check `src/main_matrix_multiplication.cpp`
 - [x] The bitonic sort kernel implementation, check `src/main_bitonic_sort.cpp`
 - [x] The image dilate and erode kernel using vHGW algorithm, check `src/main_erode_dilate.cpp`
+- [x] The integrated cuda icp tool, check the sub-directory `cuda-icp`
 
 
 ## More things
