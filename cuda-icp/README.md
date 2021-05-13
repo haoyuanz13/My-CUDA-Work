@@ -3,7 +3,7 @@
 Here we provide a CUDA-ICP Tool, using the GPU to speed up the icp implementation. <br>
 The whole tool is developed based on a open-source repo [pose_refine](https://github.com/meiqua/pose_refine), also you can check a detailed reference via the [ZhiHu link](https://zhuanlan.zhihu.com/p/58757649)
 
-This tool provides a cuda-icp `shared lib`, estimating a transformation matrix from the `src frame` to the `dst frame`.
+This tool provides a cuda-icp `shared lib`, estimating a 6-DOF transformation matrix from the `src frame` to the `dst frame`.
 
 
 ## Depends
