@@ -229,6 +229,8 @@ int main(int argc, char* argv[])
                                 cudaMemcpyDeviceToHost, 
                                 streams[0]));
 
+        _cudaDeviceSynchronize();
+
         for (int j = 0; j < feat_map_height * batch_size; j ++) 
         {
             probs_res_cuda[j] = exp(h_max_vals[j]) / h_exp_val_sum[j];

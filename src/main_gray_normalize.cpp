@@ -136,7 +136,8 @@ int main(int argc, char* argv[]) {
                                     cudaMemcpyDeviceToHost, 
                                     streams[0]
                                 ));
-
+        _cudaDeviceSynchronize();
+        
         endTime = std::chrono::high_resolution_clock::now();
         float time_memcpy_d2h_iter = std::chrono::duration<float, std::milli>(endTime - startTime).count();
         // printf("---> memcpy [d2h] cost: %.6f ms\n", time_memcpy_d2h_iter);

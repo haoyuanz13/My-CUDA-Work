@@ -207,6 +207,7 @@ int main(int argc, char* argv[]) {
                                     sizeof(uint8_t) * data_dst_height * data_dst_width,
                                     cudaMemcpyDeviceToHost, 
                                     streams[0]));
+        _cudaDeviceSynchronize();
 
         endTime = std::chrono::high_resolution_clock::now();
         float time_memcpy_d2h_iter = std::chrono::duration<float, std::milli>(endTime - startTime).count();
